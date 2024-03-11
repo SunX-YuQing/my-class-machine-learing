@@ -1,1 +1,119 @@
+# 微积分
+“积分”中的分字，就是微分、微小之意；积就是累积、加起来。顾名思义，积分就是把无穷多个无穷小累加起来合成一个整体。2500年前的古希腊人用“*逼近法*”求圆的面积（在圆内部刻内接多边形）。
+
+“微分”是曲线下微小的矩形，把这些“微分”加起来就是“积分”，就可以得到曲线下的面积。
+
+## 导数和微分
+
+如果我们把函数的某个参数*增加*或*减少*一个无穷小的量，可以知道这个函数会以多快的速度增加或减少，
+
+假设我们有一个函数$f: \mathbb{R} \rightarrow \mathbb{R}$，其输入和输出都是标量。
+(**如果$f$的*导数*存在，这个极限被定义为**)
+
+**$$f'(x) = \lim_{h \rightarrow 0} \frac{f(x+h) - f(x)}{h}.$$**
+
+如果$f'(a)$存在，则称$f$在$a$处是*可微*（differentiable）的。
+如果$f$在一个区间内的每个数上都是可微的，则此函数在此区间中是可微的。
+我们可以将 :eqref:`eq_derivative`中的导数$f'(x)$解释为$f(x)$相对于$x$的*瞬时*（instantaneous）变化率。
+所谓的瞬时变化率是基于$x$中的变化$h$，且$h$接近$0$。
+
+为了更好地解释导数，让我们做一个实验。
+(**定义$u=f(x)=3x^2-4x$**)如下：
+%matplotlib inline
+import numpy as np
+from matplotlib_inline import backend_inline
+from d2l import torch as d2l
+
+
+def f(x):
+    return 3 * x ** 2 - 4 * x
+
+def numerical_lim(f, x, h):
+    return (f(x + h) - f(x)) / h
+
+h = 0.1
+for i in range(5):
+    print(f'h={h:.5f}, numerical limit={numerical_lim(f, 1, h):.5f}')
+    h *= 0.1
+
+x = np.arange(0, 3, 0.1)
+d2l.plot(x, [f(x), 2 * x - 3], 'x', 'f(x)', legend=['f(x)', 'Tangent line (x=1)'])
+## 偏导数
+
+将微分的思想推广到*多元函数*（multivariate function）上。
+
+设$y = f(x_1, x_2, \ldots, x_n)$是一个具有$n$个变量的函数。
+$y$关于第$i$个参数$x_i$的*偏导数*（partial derivative）为：
+
+$$ \frac{\partial y}{\partial x_i} = \lim_{h \rightarrow 0} \frac{f(x_1, \ldots, x_{i-1}, x_i+h, x_{i+1}, \ldots, x_n) - f(x_1, \ldots, x_i, \ldots, x_n)}{h}.$$
+
+为了计算$\frac{\partial y}{\partial x_i}$，
+我们可以简单地将$x_1, \ldots, x_{i-1}, x_{i+1}, \ldots, x_n$看作常数，
+并计算$y$关于$x_i$的导数。
+对于偏导数的表示，以下是等价的：
+
+$$\frac{\partial y}{\partial x_i} = \frac{\partial f}{\partial x_i} = f_{x_i} = f_i = D_i f = D_{x_i} f.$$
+## 梯度
+
+我们可以连结一个多元函数对其所有变量的偏导数，以得到该函数的*梯度*（gradient）向量。
+具体而言，设函数$f:\mathbb{R}^n\rightarrow\mathbb{R}$的输入是
+一个$n$维向量$\mathbf{x}=[x_1,x_2,\ldots,x_n]^\top$，并且输出是一个标量。
+函数$f(\mathbf{x})$相对于$\mathbf{x}$的梯度是一个包含$n$个偏导数的向量:
+
+$$\nabla_{\mathbf{x}} f(\mathbf{x}) = \bigg[\frac{\partial f(\mathbf{x})}{\partial x_1}, \frac{\partial f(\mathbf{x})}{\partial x_2}, \ldots, \frac{\partial f(\mathbf{x})}{\partial x_n}\bigg]^\top,$$
+
+其中$\nabla_{\mathbf{x}} f(\mathbf{x})$通常在没有歧义时被$\nabla f(\mathbf{x})$取代。
+
+假设$\mathbf{x}$为$n$维向量，在微分多元函数时经常使用以下规则:
+
+* 对于所有$\mathbf{A} \in \mathbb{R}^{m \times n}$，都有$\nabla_{\mathbf{x}} \mathbf{A} \mathbf{x} = \mathbf{A}^\top$
+* 对于所有$\mathbf{A} \in \mathbb{R}^{n \times m}$，都有$\nabla_{\mathbf{x}} \mathbf{x}^\top \mathbf{A}  = \mathbf{A}$
+* 对于所有$\mathbf{A} \in \mathbb{R}^{n \times n}$，都有$\nabla_{\mathbf{x}} \mathbf{x}^\top \mathbf{A} \mathbf{x}  = (\mathbf{A} + \mathbf{A}^\top)\mathbf{x}$
+* $\nabla_{\mathbf{x}} \|\mathbf{x} \|^2 = \nabla_{\mathbf{x}} \mathbf{x}^\top \mathbf{x} = 2\mathbf{x}$
+
+同样，对于任何矩阵$\mathbf{X}$，都有$\nabla_{\mathbf{X}} \|\mathbf{X} \|_F^2 = 2\mathbf{X}$。
+正如我们之后将看到的，梯度对于设计深度学习中的优化算法有很大用处。
+## 链式法则
+
+然而，上面方法可能很难找到梯度。
+这是因为在机器学习中，多元函数通常是*复合*（composite）的，
+所以难以应用上述任何规则来微分这些函数。
+幸运的是，链式法则可以被用来微分复合函数。
+
+让我们先考虑单变量函数。假设函数$y=f(u)$和$u=g(x)$都是可微的，根据链式法则：
+
+$$\frac{dy}{dx} = \frac{dy}{du} \frac{du}{dx}.$$
+
+现在考虑一个更一般的场景，即函数具有任意数量的变量的情况。
+假设可微分函数$y$有变量$u_1, u_2, \ldots, u_m$，其中每个可微分函数$u_i$都有变量$x_1, x_2, \ldots, x_n$。
+注意，$y$是$x_1, x_2， \ldots, x_n$的函数。
+对于任意$i = 1, 2, \ldots, n$，链式法则给出：
+
+$$\frac{\partial y}{\partial x_i} = \frac{\partial y}{\partial u_1} \frac{\partial u_1}{\partial x_i} + \frac{\partial y}{\partial u_2} \frac{\partial u_2}{\partial x_i} + \cdots + \frac{\partial y}{\partial u_m} \frac{\partial u_m}{\partial x_i}$$
+## 自动微分
+
+
+虽然求导的计算很简单，只需要一些基本的微积分。
+但对于复杂的模型，手工进行更新是一件很痛苦的事情（而且经常容易出错）。
+
+一般的框架通过自动计算导数，即*自动微分*（automatic differentiation）来加快求导。
+实际中，根据设计好的模型，系统会构建一个*计算图*（computational graph），
+来跟踪计算是哪些数据通过哪些操作组合起来产生输出。
+自动微分使系统能够随后反向传播梯度。
+这里，*反向传播*（backpropagate）意味着跟踪整个计算图，填充关于每个参数的偏导数。
+
+**一个简单的例子**
+
+作为一个演示例子，(**假设我们想对函数$y=2\mathbf{x}^{\top}\mathbf{x}$关于列向量$\mathbf{x}$求导**)。
+首先，我们创建变量`x`并为其分配一个初始值。
+import torch
+
+x = torch.arange(4.0,requires_grad=True)
+y = 2 * torch.dot(x, x)
+print(x)
+y.backward()
+x.grad
+
+
+
 
